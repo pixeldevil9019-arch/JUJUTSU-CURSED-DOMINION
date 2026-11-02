@@ -148,6 +148,7 @@ Java_com_curseddominion_game_MainActivity_nativeTouch(JNIEnv*, jobject,jfloat x,
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_curseddominion_game_MainActivity_nativeSurfaceCreated(JNIEnv*, jobject) {
+    std::lock_guard<std::mutex> lock(game_mutex);
     release_gl_resources();
     constexpr char vs[] =
         "#version 300 es\nlayout(location=0) in vec2 p; layout(location=1) in vec3 c;"
