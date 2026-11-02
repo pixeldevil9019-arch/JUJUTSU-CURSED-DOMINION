@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.22.1)
+project(cursed_dominion LANGUAGES CXX)
+add_library(cursed_dominion SHARED native_renderer.cpp)
+target_compile_features(cursed_dominion PRIVATE cxx_std_20)
+target_compile_options(cursed_dominion PRIVATE -Wall -Wextra -Werror)
+find_library(log-lib log REQUIRED)
+find_library(gles-lib GLESv3 REQUIRED)
+target_link_libraries(cursed_dominion PRIVATE ${log-lib} ${gles-lib})
