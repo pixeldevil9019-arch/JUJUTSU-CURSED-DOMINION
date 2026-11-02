@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdio>
 #include <string>
+#include <mutex>
 #include <vector>
 
 namespace {
@@ -15,6 +16,7 @@ struct Vertex { GLfloat x, y, r, g, b; };
 struct Enemy { float x, y, hp = 3.0F; bool alive = true; float contact = 0.0F; };
 
 GLuint program = 0, vao = 0, vbo = 0;
+std::mutex game_mutex;
 GLint color_location = -1;
 std::atomic<float> input_x{0.0F}, input_y{0.0F};
 std::atomic<bool> joystick_active{false}, attack_requested{false};
@@ -122,6 +124,7 @@ Java_com_curseddominion_game_MainActivity_nativeBuildLabel(JNIEnv* env, jobject)
 }
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_curseddominion_game_MainActivity_nativeStatus(JNIEnv* env, jobject) {
+    std::lock_guard<std::mutex> lock(game_mutex);
     char text[96];
     std::snprintf(text,sizeof(text),"HP %.0f%%   WAVE %d   KILLS %d",player_hp,wave,kills);
     return env->NewStringUTF(text);
@@ -174,6 +177,7 @@ Java_com_curseddominion_game_MainActivity_nativeSurfaceChanged(JNIEnv*,jobject,j
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_curseddominion_game_MainActivity_nativeDrawFrame(JNIEnv*,jobject) {
+    std::lock_guard<std::mutex> lock(game_mutex);
     const auto now=std::chrono::steady_clock::now();
     float dt=std::chrono::duration<float>(now-previous_frame).count();
     previous_frame=now; dt=std::clamp(dt,0.0F,0.05F);
@@ -202,7 +206,7 @@ Java_com_curseddominion_game_MainActivity_nativeDrawFrame(JNIEnv*,jobject) {
     add_triangle(vertices,player_x,player_y+0.11F,player_x-0.075F,player_y-0.07F,
                  player_x+0.075F,player_y-0.07F,0.82F,0.95F,1.0F);
     const float bx=joystick_active.load()?joystick_origin_x.load():0.18F;
-    const float by=joystick_active.load()?1.0F-joystick_origin_y.load():-0.70F;
+    const float by=joystick_active.load()?1.0F-2.0F*joystick_origin_y.load():-0.70F;
     add_circle(vertices,bx*2.0F-1.0F,by,0.19F,0.18F,0.14F,0.25F);
     add_circle(vertices,bx*2.0F-1.0F+input_x.load()*0.10F,by-input_y.load()*0.10F,
                0.075F,0.50F,0.40F,0.68F);
